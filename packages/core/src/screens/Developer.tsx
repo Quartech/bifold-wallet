@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View, Pressable, Switch, StyleSheet, ScrollView } from 'react-native'
+import { View, Pressable, Switch, StyleSheet, ScrollView, Button, NativeModules } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { DispatchAction } from '../contexts/reducers/store'
@@ -8,8 +8,11 @@ import { useStore } from '../contexts/store'
 import { useTheme } from '../contexts/theme'
 import { testIdWithKey } from '../utils/testable'
 import { ThemedText } from '../components/texts/ThemedText'
+const { MdocNativeTransport } = NativeModules;
+
 
 const Developer: React.FC = () => {
+  
   const [store, dispatch] = useStore()
   const { t } = useTranslation()
   const { ColorPalette } = useTheme()
@@ -166,6 +169,14 @@ const Developer: React.FC = () => {
               value={acceptDevCredentials}
             />
           </Pressable>
+        </View>
+        <View style={styles.settingContainer}>
+          <View style={{ flex: 1 }}>
+            <ThemedText variant="bold" accessible={false} style={styles.settingLabelText}>
+              {'Test Native Module'}
+            </ThemedText>
+          </View>
+          <Button onPress={() => {MdocNativeTransport.createCalendarEvent('testName', 'testLocation')}} title={'Test Native Module'}/>
         </View>
         <View style={styles.settingContainer}>
           <View style={{ flex: 1 }}>

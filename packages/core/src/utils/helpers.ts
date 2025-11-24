@@ -8,7 +8,6 @@ import {
   AnonCredsRequestedAttributeMatch,
   AnonCredsRequestedPredicate,
   AnonCredsRequestedPredicateMatch,
-  getCredentialsForAnonCredsProofRequest,
 } from '@credo-ts/anoncreds'
 import {
   Agent,
@@ -51,6 +50,7 @@ import { ChildFn } from '../types/tour'
 import { BifoldAgent } from './agent'
 import {
   createAnonCredsProofRequest,
+  createAnonCredsCredentialsFromDescriptorMetadata,
   filterInvalidProofRequestMatches,
   getDescriptorMetadata,
 } from './anonCredsProofRequestMapper'
@@ -951,15 +951,22 @@ export const retrieveCredentialsForProof = async (
 
       const presentationDefinition = presentationExchange.presentation_definition
       const descriptorMetadata = getDescriptorMetadata(difPexCredentialsForRequest)
+      const w3cToExchangeRecordMap = new Map<string, CredentialExchangeRecord>()
+      fullCredentials.forEach((credExRecord) => {
+        credExRecord.credentials.forEach((binding) => {
+          w3cToExchangeRecordMap.set(binding.credentialRecordId, credExRecord)
+        })
+      })
 
       const anonCredsProofRequest = createAnonCredsProofRequest(presentationDefinition, descriptorMetadata)
-      const anonCredsCredentialsForRequest = await getCredentialsForAnonCredsProofRequest(
-        agent.context,
+      const anonCredsCredentialsForRequest = createAnonCredsCredentialsFromDescriptorMetadata(
         anonCredsProofRequest,
-        { filterByNonRevocationRequirements: false }
+        descriptorMetadata,
+        fullCredentials
       )
 
       const filtered = filterInvalidProofRequestMatches(anonCredsCredentialsForRequest, descriptorMetadata)
+
       const processedAttributes = await processProofAttributes(
         t,
         anonCredsProofRequest,

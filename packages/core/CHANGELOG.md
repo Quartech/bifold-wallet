@@ -1,5 +1,15 @@
 # @bifold/core
 
+## 2.9.0
+
+### Minor Changes
+
+- 2319500: Updated PIN screen design and functionality
+
+### Patch Changes
+
+- fe7a7bc: Filter sub field out of sd jwt credential display
+
 ## 2.8.0
 
 ### Minor Changes

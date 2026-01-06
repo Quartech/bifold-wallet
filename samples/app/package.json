@@ -16,9 +16,10 @@
     "ios:setup": "bundle install && cd ios && bundle exec pod install",
     "ios": "react-native run-ios --scheme AriesBifold",
     "setup": "yarn android:setup && yarn ios:setup",
-    "start": "react-native start --reset-cache --experimental-debugger"
+    "start": "react-native start --reset-cache"
   },
   "dependencies": {
+    "@animo-id/react-native-ble-didcomm": "~0.9.3",
     "@babel/runtime": "~7.27.0",
     "@bifold/core": "2.11.7",
     "@bifold/oca": "2.11.7",
@@ -32,6 +33,7 @@
     "@credo-ts/question-answer": "0.5.17",
     "@credo-ts/react-hooks": "0.6.1",
     "@credo-ts/react-native": "0.5.17",
+    "@credo-ts/transport-ble": "~0.3.0",
     "@credo-ts/webvh": "0.5.17",
     "@formatjs/intl-datetimeformat": "~4.2.6",
     "@formatjs/intl-displaynames": "~5.2.6",

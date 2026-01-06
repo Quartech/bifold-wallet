@@ -55,13 +55,13 @@ export function getAgentModules({ indyNetworks, mediatorInvitationUrl, txnCache 
   const indyCredentialFormat = new LegacyIndyCredentialFormatService()
   const indyProofFormat = new LegacyIndyProofFormatService()
 
-  if (txnCache) {
-    indyVdr.setLedgerTxnCache({
-      capacity: txnCache.capacity,
-      expiry_offset_ms: txnCache.expiryOffsetMs,
-      path: txnCache.path,
-    })
-  }
+  // if (txnCache) {
+  //   indyVdr.setLedgerTxnCache({
+  //     capacity: txnCache.capacity,
+  //     expiry_offset_ms: txnCache.expiryOffsetMs,
+  //     path: txnCache.path,
+  //   })
+  // }
 
   return {
     askar: new AskarModule({

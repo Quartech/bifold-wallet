@@ -4,6 +4,14 @@ import { agentDependencies } from '@credo-ts/react-native'
 import { GetCredentialDefinitionRequest, GetSchemaRequest } from '@hyperledger/indy-vdr-shared'
 import { useCallback, useRef, useState } from 'react'
 import { CachesDirectoryPath } from 'react-native-fs'
+import {
+  Central,
+  Peripheral,
+  DEFAULT_DIDCOMM_SERVICE_UUID,
+  DEFAULT_DIDCOMM_MESSAGE_CHARACTERISTIC_UUID,
+  DEFAULT_DIDCOMM_INDICATE_CHARACTERISTIC_UUID,
+} from '@animo-id/react-native-ble-didcomm'
+import { BleInboundTransport, BleOutboundTransport } from '@credo-ts/transport-ble'
 
 import { TOKENS, useServices } from '../container-api'
 import { DispatchAction } from '../contexts/reducers/store'
@@ -11,6 +19,7 @@ import { useStore } from '../contexts/store'
 import { WalletSecret } from '../types/security'
 import { createLinkSecretIfRequired, getAgentModules } from '../utils/agent'
 import { migrateToAskar } from '../utils/migration'
+import Config from 'react-native-config'
 
 export type AgentSetupReturnType = {
   agent: Agent | null
@@ -74,6 +83,31 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
           },
         }),
       })
+
+      console.log(`BLE: Launching in mode ${Config.BLE_OPERATION_MODE}`)
+
+      if (Config.BLE_OPERATION_MODE === 'central') {
+        const central = new Central()
+        await central.start()
+        await central.setService({
+          serviceUUID: DEFAULT_DIDCOMM_SERVICE_UUID,
+          messagingUUID: DEFAULT_DIDCOMM_MESSAGE_CHARACTERISTIC_UUID,
+          indicationUUID: DEFAULT_DIDCOMM_INDICATE_CHARACTERISTIC_UUID,
+        })
+        const bleTransport = new BleInboundTransport(central)
+        newAgent.registerInboundTransport(bleTransport)
+      } else if (Config.BLE_OPERATION_MODE === 'peripheral') {
+        const peripheral = new Peripheral()
+        await peripheral.start()
+        await peripheral.setService({
+          serviceUUID: DEFAULT_DIDCOMM_SERVICE_UUID,
+          messagingUUID: DEFAULT_DIDCOMM_MESSAGE_CHARACTERISTIC_UUID,
+          indicationUUID: DEFAULT_DIDCOMM_INDICATE_CHARACTERISTIC_UUID,
+        })
+        const bleTransport = new BleOutboundTransport(peripheral)
+        newAgent.registerOutboundTransport(bleTransport)
+      }
+
       const wsTransport = new WsOutboundTransport()
       const httpTransport = new HttpOutboundTransport()
 

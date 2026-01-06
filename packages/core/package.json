@@ -38,6 +38,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@animo-id/react-native-ble-didcomm": "~0.9.3",
     "@babel/core": "~7.22.20",
     "@babel/runtime": "~7.23.9",
     "@bifold/oca": "2.11.7",
@@ -52,6 +53,7 @@
     "@credo-ts/question-answer": "0.5.17",
     "@credo-ts/react-hooks": "0.6.1",
     "@credo-ts/react-native": "0.5.17",
+    "@credo-ts/transport-ble": "~0.3.0",
     "@credo-ts/webvh": "0.5.17",
     "@formatjs/intl-datetimeformat": "~4.2.6",
     "@formatjs/intl-displaynames": "~5.2.6",
@@ -151,6 +153,7 @@
     "zustand": "^4.5.2"
   },
   "peerDependencies": {
+    "@animo-id/react-native-ble-didcomm": "~0.9.3",
     "@credo-ts/anoncreds": "0.5.17",
     "@credo-ts/askar": "0.5.17",
     "@credo-ts/core": "0.5.17",
@@ -161,6 +164,7 @@
     "@credo-ts/question-answer": "0.5.17",
     "@credo-ts/react-hooks": "0.6.1",
     "@credo-ts/react-native": "0.5.17",
+    "@credo-ts/transport-ble": "~0.3.0",
     "@formatjs/intl-datetimeformat": "~4.2.6",
     "@formatjs/intl-displaynames": "~5.2.6",
     "@formatjs/intl-getcanonicallocales": "~1.7.3",

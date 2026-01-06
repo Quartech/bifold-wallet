@@ -114,6 +114,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@animo-id/react-native-ble-didcomm@npm:~0.9.3":
+  version: 0.9.3
+  resolution: "@animo-id/react-native-ble-didcomm@npm:0.9.3"
+  dependencies:
+    "@credo-ts/transport-ble": "npm:^0.3.0"
+    buffer: "npm:^6.0.3"
+  peerDependencies:
+    "@credo-ts/anoncreds": "*"
+    "@credo-ts/core": "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/23e45996275f7a20f4e64bd13a2e25f4f0d78fd3499e9c865a34e43664e04f9896347b59df0e2a1b876553f9e6e7e42f4ba70952650d184e2bd859e6a707a34c
+  languageName: node
+  linkType: hard
+
 "@astronautlabs/jsonpath@npm:^1.1.2":
   version: 1.1.2
   resolution: "@astronautlabs/jsonpath@npm:1.1.2"
@@ -2427,6 +2442,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bifold/core@workspace:packages/core"
   dependencies:
+    "@animo-id/react-native-ble-didcomm": "npm:~0.9.3"
     "@babel/core": "npm:~7.22.20"
     "@babel/runtime": "npm:~7.23.9"
     "@bifold/oca": "npm:2.11.7"
@@ -2441,6 +2457,7 @@ __metadata:
     "@credo-ts/question-answer": "npm:0.5.17"
     "@credo-ts/react-hooks": "npm:0.6.1"
     "@credo-ts/react-native": "npm:0.5.17"
+    "@credo-ts/transport-ble": "npm:~0.3.0"
     "@credo-ts/webvh": "npm:0.5.17"
     "@formatjs/intl-datetimeformat": "npm:~4.2.6"
     "@formatjs/intl-displaynames": "npm:~5.2.6"
@@ -2540,6 +2557,7 @@ __metadata:
     uuid: "npm:~9.0.1"
     zustand: "npm:^4.5.2"
   peerDependencies:
+    "@animo-id/react-native-ble-didcomm": ~0.9.3
     "@credo-ts/anoncreds": 0.5.17
     "@credo-ts/askar": 0.5.17
     "@credo-ts/core": 0.5.17
@@ -2550,6 +2568,7 @@ __metadata:
     "@credo-ts/question-answer": 0.5.17
     "@credo-ts/react-hooks": 0.6.1
     "@credo-ts/react-native": 0.5.17
+    "@credo-ts/transport-ble": ~0.3.0
     "@formatjs/intl-datetimeformat": ~4.2.6
     "@formatjs/intl-displaynames": ~5.2.6
     "@formatjs/intl-getcanonicallocales": ~1.7.3
@@ -3463,6 +3482,17 @@ __metadata:
     react-native-fs: ^2.20.0
     react-native-get-random-values: ^1.8.0
   checksum: 10c0/69e686bb6c1ed2616db29bac3ca70104286a10f811eb89692e65ae18429c02abf536017fff0865f875aad090b05a9167f4c93e4d5c642a230434d0d214e9835c
+  languageName: node
+  linkType: hard
+
+"@credo-ts/transport-ble@npm:^0.3.0, @credo-ts/transport-ble@npm:~0.3.0":
+  version: 0.3.0
+  resolution: "@credo-ts/transport-ble@npm:0.3.0"
+  peerDependencies:
+    "@animo-id/react-native-ble-didcomm": ^0.5.1
+    "@credo-ts/core": ^0.5.0
+    react-native: ">=0.60.6"
+  checksum: 10c0/303326eb32af786a7613cf49038a72ce3b0329a71d8a53c7f8d1a657a6ce31721558e208edbdf28fe276e91dbca97d64193e55d9fddb941a78b0b2055a3babf7
   languageName: node
   linkType: hard
 
@@ -8694,6 +8724,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "bifold-app@workspace:samples/app"
   dependencies:
+    "@animo-id/react-native-ble-didcomm": "npm:~0.9.3"
     "@babel/core": "npm:~7.22.20"
     "@babel/preset-env": "npm:~7.22.20"
     "@babel/runtime": "npm:~7.27.0"
@@ -8709,6 +8740,7 @@ __metadata:
     "@credo-ts/question-answer": "npm:0.5.17"
     "@credo-ts/react-hooks": "npm:0.6.1"
     "@credo-ts/react-native": "npm:0.5.17"
+    "@credo-ts/transport-ble": "npm:~0.3.0"
     "@credo-ts/webvh": "npm:0.5.17"
     "@formatjs/intl-datetimeformat": "npm:~4.2.6"
     "@formatjs/intl-displaynames": "npm:~5.2.6"

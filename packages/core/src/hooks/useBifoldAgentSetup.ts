@@ -9,7 +9,7 @@ import { TOKENS, useServices } from '../container-api'
 import { DispatchAction } from '../contexts/reducers/store'
 import { useStore } from '../contexts/store'
 import { WalletSecret } from '../types/security'
-import { createLinkSecretIfRequired, getAgentModules } from '../utils/agent'
+import { createLinkSecretIfRequired, getAgentModulesWithCertificates } from '../utils/agent'
 import { migrateToAskar } from '../utils/migration'
 
 export type AgentSetupReturnType = {
@@ -22,11 +22,12 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
   const [agent, setAgent] = useState<Agent | null>(null)
   const agentInstanceRef = useRef<Agent | null>(null)
   const [store, dispatch] = useStore()
-  const [cacheSchemas, cacheCredDefs, logger, indyLedgers] = useServices([
+  const [cacheSchemas, cacheCredDefs, logger, indyLedgers, config] = useServices([
     TOKENS.CACHE_SCHEMAS,
     TOKENS.CACHE_CRED_DEFS,
     TOKENS.UTIL_LOGGER,
     TOKENS.UTIL_LEDGERS,
+    TOKENS.CONFIG,
   ])
 
   const restartExistingAgent = useCallback(
@@ -62,15 +63,18 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
           autoUpdateStorageOnStartup: true,
         },
         dependencies: agentDependencies,
-        modules: getAgentModules({
-          indyNetworks: indyLedgers,
-          mediatorInvitationUrl: mediatorUrl,
-          txnCache: {
-            capacity: 1000,
-            expiryOffsetMs: 1000 * 60 * 60 * 24 * 7,
-            path: CachesDirectoryPath + '/txn-cache',
+        modules: await getAgentModulesWithCertificates(
+          {
+            indyNetworks: indyLedgers,
+            mediatorInvitationUrl: mediatorUrl,
+            txnCache: {
+              capacity: 1000,
+              expiryOffsetMs: 1000 * 60 * 60 * 24 * 7,
+              path: CachesDirectoryPath + '/txn-cache',
+            },
           },
-        }),
+          config.trustedCertificatesUrl
+        ),
       })
       const wsTransport = new WsOutboundTransport()
       const httpTransport = new HttpOutboundTransport()
@@ -80,7 +84,7 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
 
       return newAgent
     },
-    [store.preferences.walletName, logger, indyLedgers]
+    [store.preferences.walletName, logger, indyLedgers, config.trustedCertificatesUrl]
   )
 
   const migrateIfRequired = useCallback(

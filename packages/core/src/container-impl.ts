@@ -87,6 +87,7 @@ export const defaultConfig: Config = {
   PINScreensConfig: {
     useNewPINDesign: false,
   },
+  trustedCertificatesUrl: ReactConfig.TRUSTED_CERTIFICATES_URL,
 }
 
 export const defaultHistoryEventsLogger: HistoryEventsLoggerConfig = {

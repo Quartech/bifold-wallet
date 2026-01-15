@@ -49,6 +49,7 @@ export interface Config {
   appUpdateConfig?: AppUpdateConfig
   preventScreenCapture?: boolean
   PINScreensConfig: PINScreensConfig
+  trustedCertificatesUrl?: string
 }
 
 export interface PINScreensConfig {

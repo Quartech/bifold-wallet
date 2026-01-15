@@ -1071,6 +1071,36 @@ export const removeExistingInvitationsById = async (
 }
 
 /**
+ * Workaround for class-transformer @Expose decorator not working properly in React Native
+ * Manually maps @id and @type to id and type properties
+ */
+const fixInvitationProperties = (invitation: any): void => {
+  if (invitation && typeof invitation === 'object') {
+    // Map @id to id if id is missing
+    if (!invitation.id && invitation['@id']) {
+      invitation.id = invitation['@id']
+    }
+    // Map @type to type if type is missing
+    if (!invitation.type && invitation['@type']) {
+      invitation.type = invitation['@type']
+    }
+    // Also fix services if they have the same issue
+    if (Array.isArray(invitation.services)) {
+      invitation.services.forEach((service: any) => {
+        if (service && typeof service === 'object') {
+          if (!service.id && service['@id']) {
+            service.id = service['@id']
+          }
+          if (!service.type && service['@type']) {
+            service.type = service['@type']
+          }
+        }
+      })
+    }
+  }
+}
+
+/**
  * Get a oob record and connection record from a URI using built-in Credo methods
  * @param uri a URI that is either a redirect URL or contains a base64 encoded connection invite in query params
  * @param agent an Agent instance
@@ -1085,6 +1115,9 @@ export const connectFromInvitation = async (
   reuseConnection: boolean = false
 ): Promise<DidCommOutOfBandRecord> => {
   const invitation = await agent?.modules.oob.parseInvitation(uri)
+  
+  // Apply workaround for React Native decorator issues
+  fixInvitationProperties(invitation)
 
   if (!invitation) {
     throw new Error('Could not parse invitation from URL')

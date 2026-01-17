@@ -28,7 +28,6 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
     TOKENS.UTIL_LOGGER,
     TOKENS.UTIL_LEDGERS,
     TOKENS.UTIL_AGENT_BRIDGE,
-    TOKENS.UTIL_REFRESH_ORCHESTRATOR,
     TOKENS.CONFIG,
   ])
 

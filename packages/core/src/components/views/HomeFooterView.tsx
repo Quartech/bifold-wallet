@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native'
 import { useTheme } from '../../contexts/theme'
 import { useOpenIDCredentials } from '../../modules/openid/context/OpenIDCredentialRecordProvider'
 import { ThemedText } from '../texts/ThemedText'
+import { MdocDataTransferTest } from '../../components/MdocDataTransferTest'
 
 const offset = 25
 
@@ -74,27 +75,7 @@ const HomeFooterView: React.FC<HomeFooterViewProps> = ({ children }) => {
 
     return (
       <>
-        <View style={styles.imageContainer}>
-          <Assets.svg.homeCenterImg {...{ width: '30%' }} />
-        </View>
-
-        <View style={styles.messageContainer}>
-          <ThemedText
-            adjustsFontSizeToFit
-            style={[HomeTheme.credentialMsg, { marginTop: offset, textAlign: 'center' }]}
-          >
-            {credentialMsg}
-          </ThemedText>
-        </View>
-
-        <View style={styles.messageContainer}>
-          <ThemedText
-            adjustsFontSizeToFit
-            style={[HomeTheme.credentialMsg, { marginTop: offset, textAlign: 'center' }]}
-          >
-            {scanReminder}
-          </ThemedText>
-        </View>
+        <MdocDataTransferTest />
       </>
     )
   }

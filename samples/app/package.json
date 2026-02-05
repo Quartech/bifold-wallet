@@ -19,6 +19,7 @@
     "start": "react-native start --reset-cache"
   },
   "dependencies": {
+    "@animo-id/expo-mdoc-data-transfer": "^0.1.0",
     "@bifold/core": "2.12.4",
     "@bifold/oca": "2.12.4",
     "@credo-ts/anoncreds": "0.5.19",

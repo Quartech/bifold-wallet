@@ -50,6 +50,7 @@
   },
   "packageManager": "yarn@4.9.2",
   "resolutions": {
+    "@animo-id/expo-mdoc-data-transfer": "link:../expo-mdoc-data-transfer",
     "@unimodules/react-native-adapter": "./noop",
     "@unimodules/core": "./noop",
     "tsyringe": "4.8.0",

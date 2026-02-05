@@ -42,6 +42,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@animo-id/expo-mdoc-data-transfer": "^0.1.0",
     "@babel/core": "~7.28.6",
     "@babel/runtime": "~7.28.6",
     "@bifold/oca": "2.12.4",
@@ -152,6 +153,7 @@
     "zustand": "~4.5.4"
   },
   "peerDependencies": {
+    "@animo-id/expo-mdoc-data-transfer": "^0.1.0",
     "@credo-ts/anoncreds": "0.5.19",
     "@credo-ts/askar": "0.5.19",
     "@credo-ts/core": "0.5.19",

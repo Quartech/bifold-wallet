@@ -28,7 +28,12 @@ const packageDirs = [
   path.resolve(__dirname, '../../packages/verifier'),
 ]
 
-const watchFolders = [...packageDirs]
+// Add external symlinked packages to watch folders
+const externalPackages = [
+  path.resolve(__dirname, '../../../expo-mdoc-data-transfer'),
+]
+
+const watchFolders = [...packageDirs, ...externalPackages]
 
 const extraExclusionList = []
 const extraNodeModules = {}

@@ -45,6 +45,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@animo-id/expo-mdoc-data-transfer@link:../expo-mdoc-data-transfer::locator=bifold-wallet-root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@animo-id/expo-mdoc-data-transfer@link:../expo-mdoc-data-transfer::locator=bifold-wallet-root%40workspace%3A."
+  languageName: node
+  linkType: soft
+
 "@animo-id/mdoc@npm:0.2.38":
   version: 0.2.38
   resolution: "@animo-id/mdoc@npm:0.2.38"
@@ -2325,6 +2331,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bifold/core@workspace:packages/core"
   dependencies:
+    "@animo-id/expo-mdoc-data-transfer": "npm:^0.1.0"
     "@babel/core": "npm:~7.28.6"
     "@babel/runtime": "npm:~7.28.6"
     "@bifold/oca": "npm:2.12.4"
@@ -2434,6 +2441,7 @@ __metadata:
     uuid: "npm:~9.0.1"
     zustand: "npm:~4.5.4"
   peerDependencies:
+    "@animo-id/expo-mdoc-data-transfer": ^0.1.0
     "@credo-ts/anoncreds": 0.5.19
     "@credo-ts/askar": 0.5.19
     "@credo-ts/core": 0.5.19
@@ -8488,6 +8496,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "bifold-app@workspace:samples/app"
   dependencies:
+    "@animo-id/expo-mdoc-data-transfer": "npm:^0.1.0"
     "@babel/core": "npm:~7.28.6"
     "@babel/preset-env": "npm:~7.28.6"
     "@babel/runtime": "npm:~7.28.6"

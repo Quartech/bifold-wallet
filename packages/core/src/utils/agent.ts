@@ -36,6 +36,7 @@ import { useAgent } from '@bifold/react-hooks'
 import { anoncreds } from '@hyperledger/anoncreds-react-native'
 import { askar } from '@openwallet-foundation/askar-react-native'
 import { indyVdr } from '@hyperledger/indy-vdr-react-native'
+import { BifoldLogger } from '../services/logger'
 
 interface GetAgentModulesOptions {
   indyNetworks: IndyVdrPoolConfig[]
@@ -52,18 +53,28 @@ export type BifoldAgent = Agent<ReturnType<typeof getAgentModules>>
  * @returns Array of certificate strings
  */
 async function fetchTrustedCertificates(url: string): Promise<string[]> {
+  const logger = new BifoldLogger()
   try {
-    const response = await fetch(url)
+    const checkedUrl = new URL(url)
+    const response = await fetch(checkedUrl)
     if (!response.ok) {
+      logger.error(`Failed to fetch trusted certificates from ${url}: ${response.statusText}`)
+      return []
+    }
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.toLowerCase().includes('application/json')) {
+      logger.error(`Invalid content type when fetching trusted certificates from ${url}: ${contentType}`)
       return []
     }
     const certificates = await response.json()
-    console.log('Fetched trusted certificates:', JSON.stringify(certificates))
     if (!Array.isArray(certificates)) {
+      logger.error(`Invalid response format when fetching trusted certificates from ${url}`)
       return []
     }
+    logger.info(`Successfully fetched trusted certificates from ${url}`)
     return certificates.filter((cert) => typeof cert === 'string' && cert.trim().length > 0)
   } catch (error) {
+    logger.error(`Error fetching trusted certificates from ${url}: ${error}`)
     return []
   }
 }

@@ -94,6 +94,7 @@ export const defaultConfig: Config = {
   },
   showGenericErrors: false,
   enableFullScreenErrorModal: false,
+  trustedCertificatesUrl: ReactConfig.TRUSTED_CERTIFICATES_URL,
 }
 
 export const defaultHistoryEventsLogger: HistoryEventsLoggerConfig = {

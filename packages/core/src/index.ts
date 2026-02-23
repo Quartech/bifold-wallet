@@ -103,7 +103,7 @@ export * from './types/attestation'
 export { BifoldError } from './types/error'
 export { Screens, Stacks, TabStacks } from './types/navigators'
 export * from './types/version-check'
-export { createLinkSecretIfRequired, getAgentModules } from './utils/agent'
+export { createLinkSecretIfRequired, getAgentModules, getAgentModulesWithCertificates } from './utils/agent'
 export { getCredentialIdentifiers, isValidAnonCredsCredential } from './utils/credential'
 export {
   connectFromScanOrDeepLink,

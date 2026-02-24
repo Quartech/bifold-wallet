@@ -69,7 +69,7 @@ const getClaimNameForField = (field: FieldV2) => {
     }
   }
 
-  return undefined
+  throw new Error(`Unsupported field path. Expected to start with one of ${baseClaimPaths.join(', ')}`)
 }
 
 export type ProcessedAttributes = { [key: string]: ProofCredentialAttributes }
@@ -167,8 +167,16 @@ export const getDescriptorMetadata = (credentialsForRequest: DifPexCredentialsFo
 
         const record = submissionEntryCredential.credentialRecord as W3cCredentialRecord
         const types = record.getTags().types
-        const credentialType =
-          Array.isArray(types) && types.length > 1 ? types[1] : Array.isArray(types) ? types[0] : types
+        let credentialType: string | undefined
+        if (Array.isArray(types)) {
+          if (types.length > 1) {
+            credentialType = types[1]
+          } else if (types.length === 1) {
+            credentialType = types[0]
+          } else {
+            credentialType = undefined
+          }
+        }
         const anonCredsTags = getAnonCredsTagsFromRecord(record)
 
         if (!anonCredsTags) {

@@ -26,6 +26,7 @@ import {
   V2CredentialProtocol,
   V2ProofProtocol,
   WebDidResolver,
+  X509Module,
 } from '@credo-ts/core'
 import { IndyVdrAnonCredsRegistry, IndyVdrModule, IndyVdrPoolConfig } from '@credo-ts/indy-vdr'
 import { OpenId4VcHolderModule } from '@credo-ts/openid4vc'
@@ -35,23 +36,63 @@ import { useAgent } from '@bifold/react-hooks'
 import { anoncreds } from '@hyperledger/anoncreds-react-native'
 import { askar } from '@openwallet-foundation/askar-react-native'
 import { indyVdr } from '@hyperledger/indy-vdr-react-native'
+import { BifoldLogger } from '../services/logger'
 
 interface GetAgentModulesOptions {
   indyNetworks: IndyVdrPoolConfig[]
   mediatorInvitationUrl?: string
   txnCache?: { capacity: number; expiryOffsetMs: number; path?: string }
+  trustedCertificates?: string[]
 }
 
 export type BifoldAgent = Agent<ReturnType<typeof getAgentModules>>
+
+/**
+ * Fetches trusted certificates from a remote API
+ * @param url The API endpoint URL
+ * @returns Array of certificate strings
+ */
+async function fetchTrustedCertificates(url: string): Promise<string[]> {
+  const logger = new BifoldLogger()
+  try {
+    const checkedUrl = new URL(url)
+    const response = await fetch(checkedUrl)
+    if (!response.ok) {
+      logger.error(`Failed to fetch trusted certificates from ${url}: ${response.statusText}`)
+      return []
+    }
+    const contentType = response.headers.get('content-type') ?? ''
+    if (!contentType.toLowerCase().includes('application/json')) {
+      logger.error(`Invalid content type when fetching trusted certificates from ${url}: ${contentType}`)
+      return []
+    }
+    const certificates = await response.json()
+    if (!Array.isArray(certificates)) {
+      logger.error(`Invalid response format when fetching trusted certificates from ${url}`)
+      return []
+    }
+    logger.info(`Successfully fetched trusted certificates from ${url}`)
+    return certificates.filter((cert) => typeof cert === 'string' && cert.trim().length > 0)
+  } catch (error) {
+    logger.error(`Error fetching trusted certificates from ${url}: ${error}`)
+    return []
+  }
+}
 
 /**
  * Constructs the modules to be used in the agent setup
  * @param indyNetworks
  * @param mediatorInvitationUrl determine which mediator to use
  * @param txnCache optional local cache config for indyvdr
+ * @param trustedCertificates optional array of trusted certificates for X509 module
  * @returns modules to be used in agent setup
  */
-export function getAgentModules({ indyNetworks, mediatorInvitationUrl, txnCache }: GetAgentModulesOptions) {
+export function getAgentModules({ 
+  indyNetworks, 
+  mediatorInvitationUrl, 
+  txnCache, 
+  trustedCertificates = [] 
+}: GetAgentModulesOptions) {
   const indyCredentialFormat = new LegacyIndyCredentialFormatService()
   const indyProofFormat = new LegacyIndyProofFormatService()
 
@@ -120,7 +161,32 @@ export function getAgentModules({ indyNetworks, mediatorInvitationUrl, txnCache 
         new PeerDidResolver(),
       ],
     }),
+     ...(trustedCertificates.length > 0
+      ? {
+          x509: new X509Module({
+            trustedCertificates: trustedCertificates as [string, ...string[]],
+          }),
+        }
+      : {}),
   }
+}
+
+/**
+ * Fetches and prepares agent modules with trusted certificates from remote API
+ * @param options Agent module options including indyNetworks, mediatorInvitationUrl, txnCache
+ * @param trustedCertificatesUrl Optional URL to fetch trusted certificates from
+ * @returns Promise resolving to agent modules
+ */
+export async function getAgentModulesWithCertificates(
+  options: Omit<GetAgentModulesOptions, 'trustedCertificates'>,
+  trustedCertificatesUrl?: string
+) {
+  const trustedCertificates = trustedCertificatesUrl ? await fetchTrustedCertificates(trustedCertificatesUrl) : []
+
+  return getAgentModules({
+    ...options,
+    trustedCertificates,
+  })
 }
 
 interface MyAgentContextInterface {

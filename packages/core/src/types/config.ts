@@ -51,6 +51,7 @@ export interface Config {
   PINScreensConfig: PINScreensConfig
   showGenericErrors?: boolean
   enableFullScreenErrorModal?: boolean
+  trustedCertificatesUrl?: string
 }
 
 export interface PINScreensConfig {

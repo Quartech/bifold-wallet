@@ -39,7 +39,7 @@ export const ActivityProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const lastActiveTimeRef = useRef<number | undefined>(undefined)
   const defaultAutoLockoutTime = customAutoLockTimes?.default?.time ?? defaultAutoLockTime
   const timeoutInMilliseconds = useRef<number>((store.preferences.autoLockTime ?? defaultAutoLockoutTime) * 60000)
-  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const inactivityTimeoutRef = useRef<number | null>(null)
   const prevAppStateStatusRef = useRef(AppState.currentState)
   const [appStateStatus, setAppStateStatus] = useState<AppStateStatus>(AppState.currentState)
 

@@ -63,6 +63,7 @@ export enum Screens {
   AutoLock = 'AutoLock',
   UpdateAvailable = 'Update Available',
   ConfigureMediator = 'Configure Mediator',
+  OpenIDNfcPrompt = 'OpenID NFC Prompt',
 }
 
 export enum Stacks {
@@ -98,6 +99,7 @@ export type RootStackParams = {
   [Stacks.HistoryStack]: NavigatorScreenParams<HistoryStackParams>
   [Screens.CredentialDetails]: { credentialId: string }
   [Screens.OpenIDCredentialDetails]: { credentialId: string; type: OpenIDCredentialType }
+  [Screens.OpenIDNfcPrompt]: { credentialId: string; type: OpenIDCredentialType }
   [Stacks.CustomNavStack1]: undefined
 }
 

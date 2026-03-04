@@ -45,7 +45,7 @@ const Home: React.FC<HomeProps> = () => {
   const { start, stop } = useTour()
   const [showTourPopup, setShowTourPopup] = useState(false)
   const screenIsFocused = useIsFocused()
-  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const refreshTimerRef = useRef<number | null>(null)
 
   const styles = StyleSheet.create({
     flatlist: {

@@ -27,6 +27,7 @@ import ProofRequestStack from './ProofRequestStack'
 import SettingStack from './SettingStack'
 import TabStack from './TabStack'
 import { useDefaultStackOptions } from './defaultStackOptions'
+import OpenIDNfcPrompt from '../modules/openid/screens/OpenIDNfcPrompt'
 
 const MainStack: React.FC = () => {
   const { t } = useTranslation()
@@ -88,6 +89,14 @@ const MainStack: React.FC = () => {
           component={OpenIDCredentialDetails}
           options={{
             title: t('Screens.CredentialDetails'),
+            ...ScreenOptionsDictionary[Screens.OpenIDCredentialDetails],
+          }}
+        />
+        <Stack.Screen
+          name={Screens.OpenIDNfcPrompt}
+          component={OpenIDNfcPrompt}
+          options={{
+            title: 'OpenID NFC Prompt',
             ...ScreenOptionsDictionary[Screens.OpenIDCredentialDetails],
           }}
         />

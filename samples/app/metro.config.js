@@ -29,7 +29,11 @@ const packageDirs = [
   path.resolve(__dirname, '../../packages/verifier'),
 ]
 
-const watchFolders = [...packageDirs]
+const externalPackages = [
+  path.resolve(__dirname, '../../../expo-multipaz-data-transfer'),
+]
+
+const watchFolders = [...packageDirs, ...externalPackages]
 
 const extraExclusionList = []
 const extraNodeModules = {}

@@ -40,7 +40,7 @@ const LoadingPlaceholder: React.FC<LoadingPlaceholderProps> = ({
 }) => {
   const { ListItems } = useTheme()
   const { t } = useTranslation()
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<number | null>(null)
   const [overtime, setOvertime] = useState(false)
   const styles = StyleSheet.create({
     safeAreaView: {

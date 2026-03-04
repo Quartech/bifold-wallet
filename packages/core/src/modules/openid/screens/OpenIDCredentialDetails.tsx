@@ -4,7 +4,7 @@ import { RootStackParams, Screens } from '../../../types/navigators'
 import { getCredentialForDisplay } from '../display'
 import CommonRemoveModal from '../../../components/modals/CommonRemoveModal'
 import { ModalUsage } from '../../../types/remove'
-import { DeviceEventEmitter, StyleSheet, Text, View } from 'react-native'
+import { Button, DeviceEventEmitter, StyleSheet, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { testIdWithKey } from '../../../utils/testable'
 import { useTheme } from '../../../contexts/theme'
@@ -190,6 +190,9 @@ const OpenIDCredentialDetails: React.FC<OpenIDCredentialDetailsProps> = ({ navig
     if (!credentialDisplay) return null
     return (
       <View style={{ marginBottom: 50 }}>
+        <Button title={'NFC Test'} onPress={() => {
+          navigation.navigate(Screens.OpenIDNfcPrompt, { credentialId: credential?.id || '', type: type || OpenIDCredentialType.W3cCredential});
+        }} />
         <View
           style={{
             backgroundColor: ColorPalette.brand.secondaryBackground,

@@ -1,18 +1,57 @@
 import React, { useEffect, useState } from "react";
 import { StackScreenProps } from "@react-navigation/stack"
-import { Alert, Button, Platform, StyleSheet, Text, View } from "react-native";
+import { Alert, Button, DeviceEventEmitter, Platform, StyleSheet, Text, View } from "react-native";
 import { PERMISSIONS, RESULTS, requestMultiple } from 'react-native-permissions';
 import { RootStackParams, Screens } from "../../../types/navigators"
 import { MdocDataTransfer } from 'expo-multipaz-data-transfer';
+import { useOpenIDCredentials } from "../context/OpenIDCredentialRecordProvider";
+import { OpenIDCredentialType } from "../types";
+import { SdJwtVcRecord, W3cCredentialRecord, MdocRecord } from "@credo-ts/core";
+import { EventTypes } from "../../../constants";
+import { t } from "i18next";
+import { BifoldError } from "types/error";
 
 type OpenIDNfcPromptProps = StackScreenProps<RootStackParams, Screens.OpenIDNfcPrompt>
 
-const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ }) => {
-const [isListening, setIsListening] = useState(false);
+const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) => {
+  const { credentialId, type } = route.params
+  const [isListening, setIsListening] = useState(false);
   const [status, setStatus] = useState('Ready');
   const [lastRequest, setLastRequest] = useState<Uint8Array | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<string>('Not requested');
+  const { getW3CCredentialById, getSdJwtCredentialById, getMdocCredentialById } = useOpenIDCredentials()
+  const [credential, setCredential] = useState<MdocRecord | undefined>(undefined)
+  
+  useEffect(() => {
+    const fetchCredential = async () => {
+      try {
+        let record: MdocRecord | undefined
+
+        if (type === OpenIDCredentialType.Mdoc) {
+          record = await getMdocCredentialById(credentialId)
+        } else {
+          throw new Error('Unsupported credential type for NFC demo')
+        }
+
+        setCredential(record)
+      } catch {
+        // credential not found for id, display an error
+        DeviceEventEmitter.emit(
+          EventTypes.ERROR_ADDED,
+          new BifoldError(t('Error.Title1033'), t('Error.Message1033'), t('CredentialDetails.CredentialNotFound'), 1035)
+        )
+      }
+    }
+    fetchCredential()
+  }, [
+    credentialId,
+    type,
+    getSdJwtCredentialById,
+    getW3CCredentialById,
+    getMdocCredentialById,
+    t,
+  ])
 
   const requestPermissions = async () => {
     if (Platform.OS !== 'android') {
@@ -84,22 +123,14 @@ const [isListening, setIsListening] = useState(false);
           console.log('Device request received:', request.byteLength, 'bytes');
           
           try {
-            // In a real app, you would:
-            // 1. Parse the CBOR-encoded DeviceRequest
-            // 2. Show consent dialog to user
-            // 3. Retrieve requested documents
-            // 4. Create DeviceResponse with requested data
-            
-            // For demo purposes, create a minimal valid DeviceResponse
-            // CBOR encoding of: {version: "1.0", documents: [], status: 0}
             const minimalDeviceResponse = new Uint8Array([
-              0xa3,                                              // map(3)
-              0x67, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,  // "version"
-              0x63, 0x31, 0x2e, 0x30,                           // "1.0"
-              0x69, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73,  // "documents"
-              0x80,                                              // []
-              0x66, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,        // "status"
-              0x00                                               // 0
+              0xa3,                                              
+              0x67, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 
+              0x63, 0x31, 0x2e, 0x30,                          
+              0x69, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 
+              0x80,                                             
+              0x66, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,       
+              0x00                                          
             ]);
             
             // Show consent dialog

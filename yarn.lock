@@ -2034,6 +2034,7 @@ __metadata:
     eslint-plugin-import: "npm:~2.29.1"
     eslint-plugin-prettier: "npm:~5.2.6"
     expo: "npm:*"
+    expo-multipaz-data-transfer: "npm:0.1.0"
     expo-secure-store: "npm:*"
     i18next: "npm:~25.8.0"
     install-peerdeps: "npm:~3.0.7"
@@ -2119,6 +2120,7 @@ __metadata:
     axios: ~1.13.2
     base-64: ~1.0.0
     class-transformer: 0.5.1
+    expo-multipaz-data-transfer: 0.1.0
     i18next: ~21.6.16
     lodash.startcase: ~4.4.0
     moment: ~2.29.4
@@ -7187,6 +7189,7 @@ __metadata:
     eslint-import-resolver-typescript: "npm:~3.6.3"
     expo: "npm:*"
     expo-crypto: "npm:~14.1.5"
+    expo-multipaz-data-transfer: "npm:0.1.0"
     expo-secure-store: "npm:*"
     fast-text-encoding: "npm:~1.0.6"
     i18next: "npm:~21.6.16"
@@ -9726,6 +9729,12 @@ __metadata:
   checksum: 10c0/e32a87b06aa772f523afa5a995523848c61c06370085ae9e724ad24432cac38925ff69976f58b2c562828c2cefba6df00cfef2dbb206111413890ce1c2baee19
   languageName: node
   linkType: hard
+
+"expo-multipaz-data-transfer@link:../expo-multipaz-data-transfer::locator=bifold-wallet-root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "expo-multipaz-data-transfer@link:../expo-multipaz-data-transfer::locator=bifold-wallet-root%40workspace%3A."
+  languageName: node
+  linkType: soft
 
 "expo-secure-store@npm:~15.0.8":
   version: 15.0.8

@@ -247,9 +247,9 @@ const resolveBundleForW3CCredential = async (
         logo: credentialDisplay.display.logo?.url,
       })
   const ocaBundle: CredentialOverlay<BrandingOverlay> = {
+    ..._bundle,
     presentationFields: presentationFields,
     brandingOverlay: brandingOverlay,
-    ..._bundle,
   }
 
   return ocaBundle

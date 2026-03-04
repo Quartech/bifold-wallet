@@ -6,10 +6,10 @@ import { RootStackParams, Screens } from "../../../types/navigators"
 import { MdocDataTransfer } from 'expo-multipaz-data-transfer';
 import { useOpenIDCredentials } from "../context/OpenIDCredentialRecordProvider";
 import { OpenIDCredentialType } from "../types";
-import { SdJwtVcRecord, W3cCredentialRecord, MdocRecord } from "@credo-ts/core";
+import { MdocRecord, Mdoc, TypedArrayEncoder } from "@credo-ts/core";
 import { EventTypes } from "../../../constants";
 import { t } from "i18next";
-import { BifoldError } from "types/error";
+import { BifoldError } from "../../../types/error";
 
 type OpenIDNfcPromptProps = StackScreenProps<RootStackParams, Screens.OpenIDNfcPrompt>
 
@@ -123,6 +123,7 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
           console.log('Device request received:', request.byteLength, 'bytes');
           
           try {
+            // Minimal empty device response (no credential)
             const minimalDeviceResponse = new Uint8Array([
               0xa3,                                              
               0x67, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 
@@ -132,6 +133,45 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
               0x66, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,       
               0x00                                          
             ]);
+
+            // Prepare device response with actual credential
+            let deviceResponse = minimalDeviceResponse;
+            
+            if (credential) {
+              try {
+                // Get the mdoc instance from the credential record
+                const mdocInstance = Mdoc.fromBase64Url(credential.base64Url);
+                console.log('Loaded mdoc with docType:', mdocInstance.docType);
+                
+                // TODO: CBOR encoding required
+                // To construct a proper device response, we need a CBOR encoding library
+                // The structure should be:
+                // DeviceResponse = {
+                //   version: "1.0",
+                //   documents: [{
+                //     docType: mdocInstance.docType,
+                //     issuerSigned: <CBOR data from credential.base64Url>,
+                //     deviceSigned: {
+                //       nameSpaces: {},
+                //       deviceAuth: { ... }
+                //     }
+                //   }],
+                //   status: 0
+                // }
+                
+                // For now, extract the raw issuerSigned CBOR bytes
+                const issuerSignedBytes = TypedArrayEncoder.fromBase64(credential.base64Url);
+                console.log('IssuerSigned CBOR size:', issuerSignedBytes.byteLength, 'bytes');
+                console.log('Namespaces:', Object.keys(mdocInstance.issuerSignedNamespaces));
+                
+                // TODO: Install a CBOR library (e.g., 'cbor' or 'cborg') to properly encode
+                // the device response structure. Until then, using minimal response.
+                console.warn('Using minimal empty response - CBOR encoding not yet implemented');
+                
+              } catch (error) {
+                console.error('Error preparing credential for response:', error);
+              }
+            }
             
             // Show consent dialog
             Alert.alert(
@@ -152,7 +192,7 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
                   onPress: async () => {
                     try {
                       // Send response
-                      await MdocDataTransfer.sendResponse(minimalDeviceResponse);
+                      await MdocDataTransfer.sendResponse(deviceResponse);
                       setStatus('Response sent - terminating session');
                       
                       // Terminate session

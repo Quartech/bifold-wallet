@@ -215,33 +215,40 @@ const resolveBundleForW3CCredential = async (
 ): Promise<CredentialOverlay<BrandingOverlay>> => {
   const credentialDisplay = getCredentialForDisplay(credential)
 
+  const credentialType =
+      credentialDisplay.credential?.type?.find((t) => t !== 'VerifiableCredential') || credentialDisplay.id
+
+  const presentationFields = buildFieldsFromW3cCredsCredential(credentialDisplay)
+
   const params: OCABundleResolveAllParams = {
     identifiers: {
       schemaId: '',
-      credentialDefinitionId: credentialDisplay.id,
+      credentialDefinitionId: credentialType,
     },
     meta: {
       alias: credentialDisplay.display.issuer.name,
       credConnectionId: undefined,
       credName: credentialDisplay.display.name,
     },
-    attributes: buildFieldsFromW3cCredsCredential(credentialDisplay),
+    attributes: presentationFields,
     language: i18n.language,
   }
 
   const bundle = await bundleResolver.resolveAllBundles(params)
   const _bundle = bundle as CredentialOverlay<BrandingOverlay>
 
-  const brandingOverlay: BrandingOverlay = new BrandingOverlay('none', {
-    capture_base: 'none',
-    type: BrandingOverlayType.Branding10,
-    primary_background_color: credentialDisplay.display.backgroundColor,
-    background_image: credentialDisplay.display.backgroundImage?.url,
-    logo: credentialDisplay.display.logo?.url,
-  })
+  const brandingOverlay: BrandingOverlay = 
+    _bundle.brandingOverlay || 
+    new BrandingOverlay('none', {
+      capture_base: 'none',
+        type: BrandingOverlayType.Branding10,
+        primary_background_color: credentialDisplay.display.backgroundColor,
+        background_image: credentialDisplay.display.backgroundImage?.url,
+        logo: credentialDisplay.display.logo?.url,
+      })
   const ocaBundle: CredentialOverlay<BrandingOverlay> = {
     ..._bundle,
-    presentationFields: bundle.presentationFields,
+    presentationFields: presentationFields,
     brandingOverlay: brandingOverlay,
   }
 

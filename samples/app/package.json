@@ -19,6 +19,7 @@
     "start": "react-native start --reset-cache"
   },
   "dependencies": {
+    "@animo-id/mdoc": "0.2.38",
     "@babel/runtime": "~7.27.0",
     "@bifold/core": "2.12.8",
     "@bifold/oca": "2.12.8",

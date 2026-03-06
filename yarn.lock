@@ -17,6 +17,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@animo-id/mdoc@npm:0.2.38":
+  version: 0.2.38
+  resolution: "@animo-id/mdoc@npm:0.2.38"
+  dependencies:
+    compare-versions: "npm:^6.1.1"
+  checksum: 10c0/9f816a6b63da497e42531308d88bb854fa549d82d88603274f89150288d88122a1718d0d90262bc7d60715431f17e0f606b886b7c8351def1741199dd0d8a3d6
+  languageName: node
+  linkType: hard
+
 "@animo-id/mdoc@npm:^0.5.2":
   version: 0.5.2
   resolution: "@animo-id/mdoc@npm:0.5.2"
@@ -1975,6 +1984,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bifold/core@workspace:packages/core"
   dependencies:
+    "@animo-id/mdoc": "npm:0.2.38"
     "@babel/core": "npm:~7.28.6"
     "@babel/runtime": "npm:~7.28.6"
     "@bifold/oca": "npm:2.12.8"
@@ -2086,6 +2096,7 @@ __metadata:
     uuid: "npm:~9.0.1"
     zustand: "npm:~4.5.4"
   peerDependencies:
+    "@animo-id/mdoc": 0.2.38
     "@bifold/react-hooks": 2.12.8
     "@credo-ts/anoncreds": 0.6.1
     "@credo-ts/askar": 0.6.1
@@ -7136,6 +7147,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "bifold-app@workspace:samples/app"
   dependencies:
+    "@animo-id/mdoc": "npm:0.2.38"
     "@babel/core": "npm:~7.28.6"
     "@babel/preset-env": "npm:~7.28.6"
     "@babel/runtime": "npm:~7.28.6"

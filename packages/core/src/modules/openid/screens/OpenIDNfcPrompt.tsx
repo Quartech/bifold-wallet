@@ -6,23 +6,135 @@ import { RootStackParams, Screens } from "../../../types/navigators"
 import { MdocDataTransfer } from 'expo-multipaz-data-transfer';
 import { useOpenIDCredentials } from "../context/OpenIDCredentialRecordProvider";
 import { OpenIDCredentialType } from "../types";
-import { MdocRecord, Mdoc, TypedArrayEncoder } from "@credo-ts/core";
+import { MdocRecord, Mdoc, TypedArrayEncoder, MdocDeviceResponse } from "@credo-ts/core";
 import { EventTypes } from "../../../constants";
 import { t } from "i18next";
 import { BifoldError } from "../../../types/error";
+import { useAgent } from "@bifold/react-hooks";
+import { cborEncode, cborDecode, parseIssuerSigned } from '@animo-id/mdoc'
+
+/**
+ * Build a DeviceResponse CBOR structure for ISO 18013-5 presentment
+ * 
+ * This creates a minimal valid DeviceResponse by wrapping the mdoc's IssuerSigned data
+ * in the proper structure. The filtering of requested claims happens here.
+ */
+async function buildDeviceResponse(
+  mdoc: Mdoc,
+  requestedNamespaces: Record<string, Record<string, boolean>>,
+  requestedDocType: string,
+  base64Url: string
+): Promise<Uint8Array> {
+  // Validate that the requested docType matches our credential
+  if (mdoc.docType !== requestedDocType) {
+    throw new Error(`DocType mismatch: requested ${requestedDocType}, have ${mdoc.docType}`);
+  }
+
+  console.log('Building device response for docType:', mdoc.docType);
+  console.log('Requested namespaces:', JSON.stringify(requestedNamespaces, null, 2));
+  console.log('Available namespaces in mdoc:', Object.keys(mdoc.issuerSignedNamespaces));
+
+  // Decode the base64url mdoc to get the IssuerSigned structure
+  // TypedArrayEncoder.fromBase64 supports both base64 and base64url formats
+  const mdocBytes = TypedArrayEncoder.fromBase64(base64Url);
+  const issuerSignedDocument = parseIssuerSigned(mdocBytes, mdoc.docType);
+  
+  const issuerAuth = issuerSignedDocument.issuerSigned.issuerAuth;
+  const originalNameSpaces = issuerSignedDocument.issuerSigned.nameSpaces;
+  
+  console.log('Decoded IssuerSigned issuerAuth:', issuerAuth ? 'present' : 'missing');
+  console.log('Available nameSpaces:', Object.keys(originalNameSpaces));
+  
+  // Filter namespaces to only include requested elements
+  // nameSpaces is Record<string, IssuerSignedItem[]>
+  const filteredNameSpaces: Record<string, any[]> = {};
+  
+  for (const [namespaceName, requestedElements] of Object.entries(requestedNamespaces)) {
+    const namespaceItems = originalNameSpaces[namespaceName];
+    if (!namespaceItems || !Array.isArray(namespaceItems)) {
+      console.warn(`Requested namespace ${namespaceName} not found in credential`);
+      continue;
+    }
+    
+    // Filter items in this namespace to only include requested elements
+    // Each item is an IssuerSignedItem
+    const filteredItems = namespaceItems.filter((item) => {
+      try {
+        // IssuerSignedItem has an elementIdentifier property
+        const elementIdentifier = item.elementIdentifier;
+        return requestedElements[elementIdentifier] !== undefined;
+      } catch (e) {
+        console.error('Error processing issuer signed item:', e);
+        return false;
+      }
+    });
+    
+    if (filteredItems.length > 0) {
+      filteredNameSpaces[namespaceName] = filteredItems;
+      console.log(`Namespace ${namespaceName}: filtered ${filteredItems.length}/${namespaceItems.length} items`);
+    }
+  }
+
+  // Build the Document structure following ISO 18013-5 spec
+  const document = {
+    docType: mdoc.docType,
+    issuerSigned: {
+      nameSpaces: filteredNameSpaces,
+      issuerAuth: issuerAuth,
+    },
+    deviceSigned: {
+      nameSpaces: cborEncode({}), // Empty device namespaces (tagged bstr)
+      deviceAuth: {
+        deviceMac: null, // No device authentication for now
+      }
+    },
+    errors: {} // No errors
+  };
+
+  // Build DeviceResponse according to ISO 18013-5:2021
+  // DeviceResponse = {
+  //   "version": tstr,
+  //   "documents": [+Document],
+  //   "status": uint
+  // }
+  const deviceResponse = {
+    version: "1.0",
+    documents: [document],
+    status: 0 // STATUS_OK = 0
+  };
+
+  const encodedResponse = cborEncode(deviceResponse);
+  console.log('Built device response:', encodedResponse.byteLength, 'bytes');
+  
+  // Convert to proper Uint8Array type
+  return new Uint8Array(encodedResponse);
+}
 
 type OpenIDNfcPromptProps = StackScreenProps<RootStackParams, Screens.OpenIDNfcPrompt>
+
+type DeviceRequest = {
+  docType: string;
+  namespaces: Record<string, Record<string, boolean>>;
+  encodedRequest: Uint8Array;
+}
 
 const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) => {
   const { credentialId, type } = route.params
   const [isListening, setIsListening] = useState(false);
   const [status, setStatus] = useState('Ready');
-  const [lastRequest, setLastRequest] = useState<Uint8Array | null>(null);
+  const [lastRequest, setLastRequest] = useState<DeviceRequest | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<string>('Not requested');
   const { getW3CCredentialById, getSdJwtCredentialById, getMdocCredentialById } = useOpenIDCredentials()
   const [credential, setCredential] = useState<MdocRecord | undefined>(undefined)
-  
+  const { agent } = useAgent();
+
+  useEffect(() => {
+    if (credential) {
+      console.log(`Credential: ${JSON.stringify(Mdoc.fromBase64Url(credential.base64Url), null, 2)}`)
+    }
+  }, [credential])
+
   useEffect(() => {
     const fetchCredential = async () => {
       try {
@@ -117,10 +229,10 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
           console.log('Device connected via BLE');
         },
         
-        onDeviceRequest: async (request: Uint8Array) => {
+        onDeviceRequest: async (request: DeviceRequest) => {
           setStatus('Request received');
           setLastRequest(request);
-          console.log('Device request received:', request.byteLength, 'bytes');
+          console.log('Device request received:', request.encodedRequest.byteLength, 'bytes');
           
           try {
             // Minimal empty device response (no credential)
@@ -135,41 +247,27 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
             ]);
 
             // Prepare device response with actual credential
-            let deviceResponse = minimalDeviceResponse;
+            let deviceResponse: Uint8Array = minimalDeviceResponse;
             
-            if (credential) {
+            if (credential && agent) {
               try {
                 // Get the mdoc instance from the credential record
                 const mdocInstance = Mdoc.fromBase64Url(credential.base64Url);
                 console.log('Loaded mdoc with docType:', mdocInstance.docType);
-                
-                // TODO: CBOR encoding required
-                // To construct a proper device response, we need a CBOR encoding library
-                // The structure should be:
-                // DeviceResponse = {
-                //   version: "1.0",
-                //   documents: [{
-                //     docType: mdocInstance.docType,
-                //     issuerSigned: <CBOR data from credential.base64Url>,
-                //     deviceSigned: {
-                //       nameSpaces: {},
-                //       deviceAuth: { ... }
-                //     }
-                //   }],
-                //   status: 0
-                // }
-                
-                // For now, extract the raw issuerSigned CBOR bytes
-                const issuerSignedBytes = TypedArrayEncoder.fromBase64(credential.base64Url);
-                console.log('IssuerSigned CBOR size:', issuerSignedBytes.byteLength, 'bytes');
                 console.log('Namespaces:', Object.keys(mdocInstance.issuerSignedNamespaces));
                 
-                // TODO: Install a CBOR library (e.g., 'cbor' or 'cborg') to properly encode
-                // the device response structure. Until then, using minimal response.
-                console.warn('Using minimal empty response - CBOR encoding not yet implemented');
+                // Build the device response with requested claims
+                deviceResponse = await buildDeviceResponse(
+                  mdocInstance,
+                  request.namespaces,
+                  request.docType,
+                  credential.base64Url
+                );
                 
+                console.log('Built device response:', deviceResponse.byteLength, 'bytes');
               } catch (error) {
                 console.error('Error preparing credential for response:', error);
+                Alert.alert('Error', 'Failed to prepare credential response. See console for details.');
               }
             }
             
@@ -288,7 +386,7 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
       {lastRequest && (
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Last Request:</Text>
-          <Text style={styles.infoText}>{lastRequest.byteLength} bytes</Text>
+          <Text style={styles.infoText}>{lastRequest.encodedRequest.length} bytes</Text>
         </View>
       )}
 

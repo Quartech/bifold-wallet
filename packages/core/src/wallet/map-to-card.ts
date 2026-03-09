@@ -1,4 +1,5 @@
-import { CredentialExchangeRecord, MdocRecord, SdJwtVcRecord, W3cCredentialRecord } from '@credo-ts/core'
+import { MdocRecord, SdJwtVcRecord, W3cCredentialRecord } from '@credo-ts/core'
+import { DidCommCredentialExchangeRecord as CredentialExchangeRecord } from '@credo-ts/didcomm'
 import startCase from 'lodash.startcase'
 import {
   WalletCredentialCardData,
@@ -238,14 +239,13 @@ const resolveBundleForW3CCredential = async (
   const _bundle = bundle as CredentialOverlay<BrandingOverlay>
 
   const brandingOverlay: BrandingOverlay = 
-    _bundle.brandingOverlay || 
-    new BrandingOverlay('none', {
-      capture_base: 'none',
-        type: BrandingOverlayType.Branding10,
-        primary_background_color: credentialDisplay.display.backgroundColor,
-        background_image: credentialDisplay.display.backgroundImage?.url,
-        logo: credentialDisplay.display.logo?.url,
-      })
+  _bundle.brandingOverlay || new BrandingOverlay('none', {
+    capture_base: 'none',
+    type: BrandingOverlayType.Branding10,
+    primary_background_color: credentialDisplay.display.backgroundColor,
+    background_image: credentialDisplay.display.backgroundImage?.uri,
+    logo: credentialDisplay.display.logo?.uri,
+  })
   const ocaBundle: CredentialOverlay<BrandingOverlay> = {
     ..._bundle,
     presentationFields: presentationFields,

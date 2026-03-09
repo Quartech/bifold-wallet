@@ -31,7 +31,7 @@ export interface DifPexAnonCredsProofRequest extends AnonCredsProofRequest {
 
 type FieldV2 = NonNullable<
   DifPresentationExchangeDefinitionV2['input_descriptors'][number]['constraints']['fields']
->[number]
+>[number] // This type seems to be a bit broken now for some reason
 
 const getPredicateTypeAndValues = (predicateFilter: NonNullable<FieldV2['filter']>) => {
   const predicates: {
@@ -51,7 +51,7 @@ const getPredicateTypeAndValues = (predicateFilter: NonNullable<FieldV2['filter'
 
     const predicateType = supportedJsonSchemaNumericRangeProperties[key]
     if (!predicateType) throw new Error(`Unsupported predicate filter property '${key}'`)
-    predicates.push({ predicateType, predicateValue: value })
+    predicates.push({ predicateType, predicateValue: value as number })
   }
 
   return predicates

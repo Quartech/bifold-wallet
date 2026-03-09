@@ -234,8 +234,8 @@ function getMdocCredentialDisplay(
 
       if (openidCredentialDisplay.logo) {
         credentialDisplay.logo = {
-          url: openidCredentialDisplay.logo.url,
-          altText: openidCredentialDisplay.logo.alt_text,
+          uri: openidCredentialDisplay.logo.uri,
+          altText: openidCredentialDisplay.logo.altText,
         }
       }
 

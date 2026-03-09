@@ -54,7 +54,7 @@ export function extractOpenId4VcCredentialMetadata(
       display: credentialMetadata.display,
       order: credentialMetadata.order,
       credential_subject: credentialMetadata.credential_subject,
-      id: credentialMetadata.id,
+      // id: credentialMetadata.id,
     },
     issuer: {
       display: serverMetadata.display,

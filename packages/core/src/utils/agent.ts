@@ -97,8 +97,8 @@ export function getAgentModules({
   txnCache, 
   trustedCertificates = [] 
 }: GetAgentModulesOptions) {
-  const indyCredentialFormat = new LegacyIndyCredentialFormatService()
-  const indyProofFormat = new LegacyIndyProofFormatService()
+  const indyCredentialFormat = new LegacyIndyDidCommCredentialFormatService()
+  const indyProofFormat = new LegacyIndyDidCommProofFormatService()
 
   if (txnCache) {
     // TODO: Not a function?

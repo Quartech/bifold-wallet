@@ -5,7 +5,7 @@ import { ImageSourcePropType } from 'react-native'
 import { luminanceForHexColor } from './luminance'
 import { getSchemaName, getCredDefTag, fallbackDefaultCredentialNameValue, defaultCredDefTag } from './cred-def'
 import { BifoldLogger } from '../services/logger'
-import { CredentialExchangeRecord, CredentialState, W3cCredentialRecord } from '@credo-ts/core'
+import { W3cCredentialRecord } from '@credo-ts/core'
 import { getCredentialForDisplay } from '../modules/openid/display'
 
 // Credo agent shape differs across versions/contexts.

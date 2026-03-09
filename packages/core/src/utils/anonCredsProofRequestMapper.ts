@@ -9,7 +9,7 @@ import {
 } from '@credo-ts/anoncreds'
 import {
   ClaimFormat,
-  CredentialExchangeRecord,
+  //CredentialExchangeRecord,
   DifPexCredentialsForRequest,
   DifPresentationExchangeDefinition,
   DifPresentationExchangeDefinitionV2,
@@ -17,6 +17,7 @@ import {
 } from '@credo-ts/core'
 
 import { ProofCredentialAttributes, ProofCredentialPredicates } from '../types/proof-items'
+import { DidCommCredentialExchangeRecord } from '@credo-ts/didcomm'
 
 export type RecordWithMetadata = {
   record: W3cCredentialRecord
@@ -159,10 +160,10 @@ export const getDescriptorMetadata = (credentialsForRequest: DifPexCredentialsFo
 
       const recordsWithMetadata = entry.verifiableCredentials.map((submissionEntryCredential) => {
         if (
-          submissionEntryCredential.type !== ClaimFormat.LdpVc &&
-          submissionEntryCredential.type !== ClaimFormat.JwtVc
+          submissionEntryCredential.claimFormat !== ClaimFormat.LdpVc &&
+          submissionEntryCredential.claimFormat !== ClaimFormat.JwtVc
         ) {
-          throw new Error(`Unsupported credential type. ${submissionEntryCredential.type}`)
+          throw new Error(`Unsupported credential type. ${submissionEntryCredential.claimFormat}`)
         }
 
         const record = submissionEntryCredential.credentialRecord as W3cCredentialRecord
@@ -217,12 +218,12 @@ export const getDescriptorMetadata = (credentialsForRequest: DifPexCredentialsFo
 export const createAnonCredsCredentialsFromDescriptorMetadata = (
   anonCredsProofRequest: DifPexAnonCredsProofRequest,
   descriptorMetadata: DescriptorMetadata,
-  fullCredentials: CredentialExchangeRecord[]
+  fullCredentials: DidCommCredentialExchangeRecord[]
 ): AnonCredsCredentialsForProofRequest => {
   const attributes: AnonCredsCredentialsForProofRequest['attributes'] = {}
   const predicates: AnonCredsCredentialsForProofRequest['predicates'] = {}
 
-  const w3cRecordToExchangeRecord = new Map<string, CredentialExchangeRecord>()
+  const w3cRecordToExchangeRecord = new Map<string, DidCommCredentialExchangeRecord>()
   fullCredentials.forEach((credExRecord) => {
     credExRecord.credentials.forEach((binding: any) => {
       w3cRecordToExchangeRecord.set(binding.credentialRecordId, credExRecord)
@@ -238,7 +239,7 @@ export const createAnonCredsCredentialsFromDescriptorMetadata = (
     attributes[referent] = credentialsForDescriptor.map((credMeta) => {
       const exchangeRecord = w3cRecordToExchangeRecord.get(credMeta.record.id)
       const credentialId = exchangeRecord?.id || credMeta.record.id
-      let attributes = credMeta.record.credential.credentialSubject as any
+      let attributes = credMeta.record.firstCredential.credentialSubject as any
       if (attributes?.claims && typeof attributes.claims === 'object') {
         attributes = attributes.claims
       }
@@ -270,7 +271,7 @@ export const createAnonCredsCredentialsFromDescriptorMetadata = (
     predicates[referent] = credentialsForDescriptor.map((credMeta) => {
       const exchangeRecord = w3cRecordToExchangeRecord.get(credMeta.record.id)
       const credentialId = exchangeRecord?.id || credMeta.record.id
-      let attributes = credMeta.record.credential.credentialSubject as any
+      let attributes = credMeta.record.firstCredential.credentialSubject as any
       if (attributes?.claims && typeof attributes.claims === 'object') {
         attributes = attributes.claims
       }

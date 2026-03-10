@@ -11,6 +11,33 @@ import { EventTypes } from "../../../constants";
 import { t } from "i18next";
 import { BifoldError } from "../../../types/error";
 import { useAgent } from "@bifold/react-hooks";
+//import { DataItem, cborEncode } from "@credo-ts/core";
+import { cborEncode, cborDecode, DataItem } from "@animo-id/mdoc";
+
+// Helper to reconstruct session transcript from components
+const reconstructSessionTranscript = (
+  deviceEngagementBytes: Uint8Array,
+  eReaderKeyBytes: Uint8Array,
+  handoverBytes: Uint8Array
+): Uint8Array => {
+  // Session transcript structure per ISO 18013-5:
+  // [
+  //   #6.24(bstr .cbor DeviceEngagement),  // Tag 24 wrapping encoded DeviceEngagement
+  //   #6.24(bstr .cbor EReaderKey),        // Tag 24 wrapping encoded EReaderKey  
+  //   Handover                              // Handover DataItem (NOT tagged, NOT bstr)
+  // ]
+  // 
+  // DataItem class automatically applies tag 24 when created from buffer
+  const handover = cborDecode(handoverBytes);  // Decode to get the actual CBOR structure
+  
+  const sessionTranscript = DataItem.fromData([
+    new DataItem({ buffer: deviceEngagementBytes }),  // Tagged as encoded CBOR (tag 24)
+    new DataItem({ buffer: eReaderKeyBytes }),        // Tagged as encoded CBOR (tag 24)
+    handover                                          // Raw handover structure (no tag)
+  ]);
+  
+  return cborEncode(sessionTranscript);
+};
 
 type OpenIDNfcPromptProps = StackScreenProps<RootStackParams, Screens.OpenIDNfcPrompt>
 
@@ -18,7 +45,9 @@ type DeviceRequest = {
   docType: string;
   namespaces: Record<string, Record<string, boolean>>;
   encodedRequest: Uint8Array;
-  sessionTranscript: Uint8Array;
+  deviceEngagementBytes: Uint8Array;
+  eReaderKeyBytes: Uint8Array;
+  handoverBytes: Uint8Array;
 }
 
 const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) => {
@@ -136,7 +165,17 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
           setStatus('Request received');
           setLastRequest(request);
           console.log('Device request received:', request.encodedRequest.byteLength, 'bytes');
-          console.log('Session transcript:', request.sessionTranscript.byteLength, 'bytes');
+          console.log('Device engagement:', request.deviceEngagementBytes.byteLength, 'bytes');
+          console.log('eReader key:', request.eReaderKeyBytes.byteLength, 'bytes');
+          console.log('Handover:', request.handoverBytes.byteLength, 'bytes');
+          
+          // Reconstruct session transcript from components
+          const sessionTranscriptBytes = reconstructSessionTranscript(
+            request.deviceEngagementBytes,
+            request.eReaderKeyBytes,
+            request.handoverBytes
+          );
+          console.log('Reconstructed session transcript:', sessionTranscriptBytes.byteLength, 'bytes');
           
           try {
             // Minimal empty device response (no credential)
@@ -172,8 +211,16 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
                   if (publicKeyFromKms) {
                     console.log('  Public key from KMS:', JSON.stringify(publicKeyFromKms, null, 2));
                   }
+                  
+                  // Compare with the device key in the MSO
+                  console.log('  Device key from MSO:', JSON.stringify(mdocInstance.deviceKey, null, 2));
+                  
+                  // Note: Comparison of keys would require matching the JWK format from KMS
+                  // with the COSE key format from the MSO. For now, just log both.
+                  console.log('  → Check if the keyId matches and the key types/curves are the same');
                 } catch (kmsError: any) {
                   console.error('✗ Private key NOT found in KMS:', kmsError.message);
+                  console.error('  This means Credo cannot sign with the device key!');
                 }
 
                 console.log('Loaded mdoc with docType:', mdocInstance.docType);
@@ -185,8 +232,8 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
                 }
                 
                 console.log('=== SESSION TRANSCRIPT DEBUGGING ===');
-                console.log('Session transcript hex:', TypedArrayEncoder.toHex(request.sessionTranscript));
-                console.log('Session transcript length:', request.sessionTranscript.byteLength);
+                console.log('Session transcript hex:', TypedArrayEncoder.toHex(sessionTranscriptBytes));
+                console.log('Session transcript length:', sessionTranscriptBytes.byteLength);
                 
                 console.log('=== DOCUMENT REQUEST DEBUGGING ===');
                 console.log('Requested namespaces:', JSON.stringify(request.namespaces, null, 2));
@@ -201,12 +248,20 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
                   }],
                   sessionTranscriptOptions: {
                     type: 'sesionTranscriptBytes',  // Note: typo in credo API - "sesion" not "session"
-                    sessionTranscriptBytes: request.sessionTranscript,
+                    sessionTranscriptBytes: sessionTranscriptBytes,
                   },
                 });
                 
                 console.log('Built device response using credo:', deviceResponse.byteLength, 'bytes');
                 console.log('Device response hex (first 200 bytes):', TypedArrayEncoder.toHex(deviceResponse.slice(0, 200)));
+                
+                // Add comprehensive debugging for signature verification
+                console.log('=== DEVICE RESPONSE DEBUGGING ===');
+                console.log('Full device response hex:', TypedArrayEncoder.toHex(deviceResponse));
+                
+                // Log the response for manual analysis with the Python script
+                console.log('→ Copy the hex above and run:');
+                console.log('  python3 scripts/debug_signature.py "<hex>"');
               } catch (error) {
                 console.error('Error preparing credential for response:', error);
                 Alert.alert('Error', 'Failed to prepare credential response. See console for details.');

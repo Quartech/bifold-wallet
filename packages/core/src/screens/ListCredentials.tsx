@@ -55,6 +55,8 @@ const ListCredentials: React.FC = () => {
     ...mdocVcRecords,
   ]
 
+  console.log(`[Credential List] Credentials to display: ${credentials.length}`)
+
   const CredentialEmptyList = credentialEmptyList as React.FC<EmptyListProps>
   const CredentialListFooter = credentialListFooter as React.FC<CredentialListFooterProps>
 

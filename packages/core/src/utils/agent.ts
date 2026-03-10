@@ -57,30 +57,33 @@ export type BifoldAgent = Agent<BifoldAgentModules>
  * @returns Array of certificate strings
  */
 async function fetchTrustedCertificates(url: string): Promise<string[]> {
-  const logger = new BifoldLogger()
-  try {
-    const checkedUrl = new URL(url)
-    const response = await fetch(checkedUrl)
-    if (!response.ok) {
-      logger.error(`Failed to fetch trusted certificates from ${url}: ${response.statusText}`)
-      return []
-    }
-    const contentType = response.headers.get('content-type') ?? ''
-    if (!contentType.toLowerCase().includes('application/json')) {
-      logger.error(`Invalid content type when fetching trusted certificates from ${url}: ${contentType}`)
-      return []
-    }
-    const certificates = await response.json()
-    if (!Array.isArray(certificates)) {
-      logger.error(`Invalid response format when fetching trusted certificates from ${url}`)
-      return []
-    }
-    logger.info(`Successfully fetched trusted certificates from ${url}`)
-    return certificates.filter((cert) => typeof cert === 'string' && cert.trim().length > 0)
-  } catch (error) {
-    logger.error(`Error fetching trusted certificates from ${url}: ${error}`)
-    return []
-  }
+  const certs =  [`MIIBkjCCATigAwIBAgIRAJNhhcA+hd52XGxDnWcvIiswCgYIKoZIzj0EAwIwJjEXMBUGA1UEAxMOQ3JlZG8gbURMIElBQ0ExCzAJBgNVBAYTAlVTMCAXDTAwMDEwMTAwMDAwMFoYDzIwNTAwMTAxMDAwMDAwWjAmMRcwFQYDVQQDEw5DcmVkbyBtREwgSUFDQTELMAkGA1UEBhMCVVMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARzgMLb5upcLx2tAFqtXoATIZcAKqcfT9XDg9uAgtWqNYW8S1ju4uj7RcQCF10ipZxBfjiInEXwhqoWp1tXd3BFo0UwQzAdBgNVHQ4EFgQUjO6OwutrNgH1gdGv8YiJ38omiiYwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8CAQAwCgYIKoZIzj0EAwIDSAAwRQIhAMDBCRs6kS9kG91CwyfYRQcK2mt+o/ZIhA3C6aN7tQ2AAiAlCjT9ImS/IAc3lcBP8/gzo1+/vlcoMy2M5iN0WxUo4g==`]
+  console.log(`Set certs to ${JSON.stringify(certs)}`)
+  return certs
+  // const logger = new BifoldLogger()
+  // try {
+  //   const checkedUrl = new URL(url)
+  //   const response = await fetch(checkedUrl)
+  //   if (!response.ok) {
+  //     logger.error(`Failed to fetch trusted certificates from ${url}: ${response.statusText}`)
+  //     return []
+  //   }
+  //   const contentType = response.headers.get('content-type') ?? ''
+  //   if (!contentType.toLowerCase().includes('application/json')) {
+  //     logger.error(`Invalid content type when fetching trusted certificates from ${url}: ${contentType}`)
+  //     return []
+  //   }
+  //   const certificates = await response.json()
+  //   if (!Array.isArray(certificates)) {
+  //     logger.error(`Invalid response format when fetching trusted certificates from ${url}`)
+  //     return []
+  //   }
+  //   logger.info(`Successfully fetched trusted certificates from ${url}`)
+  //   return certificates.filter((cert) => typeof cert === 'string' && cert.trim().length > 0)
+  // } catch (error) {
+  //   logger.error(`Error fetching trusted certificates from ${url}: ${error}`)
+  //   return []
+  // }
 }
 
 /**
@@ -191,7 +194,7 @@ export async function getAgentModulesWithCertificates(
   trustedCertificatesUrl?: string
 ) {
   const trustedCertificates = trustedCertificatesUrl ? await fetchTrustedCertificates(trustedCertificatesUrl) : []
-
+  console.log(`Fetched trusted certificates: ${JSON.stringify(trustedCertificates)}`)
   return getAgentModules({
     ...options,
     trustedCertificates,

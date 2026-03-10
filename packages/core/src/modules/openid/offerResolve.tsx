@@ -47,7 +47,7 @@ export const resolveOpenId4VciOffer = async ({
     data: data,
     uri: offerUri,
   })
-
+  
   const resolvedCredentialOffer = await agent.openid4vc.holder.resolveCredentialOffer(offerUri)
 
   if (authorization) {

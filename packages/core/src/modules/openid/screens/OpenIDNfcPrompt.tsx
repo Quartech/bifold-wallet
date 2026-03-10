@@ -6,109 +6,11 @@ import { RootStackParams, Screens } from "../../../types/navigators"
 import { MdocDataTransfer } from 'expo-multipaz-data-transfer';
 import { useOpenIDCredentials } from "../context/OpenIDCredentialRecordProvider";
 import { OpenIDCredentialType } from "../types";
-import { MdocRecord, Mdoc, TypedArrayEncoder, MdocDeviceResponse } from "@credo-ts/core";
+import { MdocRecord, Mdoc, TypedArrayEncoder, MdocDeviceResponse, Kms } from "@credo-ts/core";
 import { EventTypes } from "../../../constants";
 import { t } from "i18next";
 import { BifoldError } from "../../../types/error";
 import { useAgent } from "@bifold/react-hooks";
-import { cborEncode, cborDecode, parseIssuerSigned } from '@animo-id/mdoc'
-
-/**
- * Build a DeviceResponse CBOR structure for ISO 18013-5 presentment
- * 
- * This creates a minimal valid DeviceResponse by wrapping the mdoc's IssuerSigned data
- * in the proper structure. The filtering of requested claims happens here.
- */
-async function buildDeviceResponse(
-  mdoc: Mdoc,
-  requestedNamespaces: Record<string, Record<string, boolean>>,
-  requestedDocType: string,
-  base64Url: string
-): Promise<Uint8Array> {
-  // Validate that the requested docType matches our credential
-  if (mdoc.docType !== requestedDocType) {
-    throw new Error(`DocType mismatch: requested ${requestedDocType}, have ${mdoc.docType}`);
-  }
-
-  console.log('Building device response for docType:', mdoc.docType);
-  console.log('Requested namespaces:', JSON.stringify(requestedNamespaces, null, 2));
-  console.log('Available namespaces in mdoc:', Object.keys(mdoc.issuerSignedNamespaces));
-
-  // Decode the base64url mdoc to get the IssuerSigned structure
-  // TypedArrayEncoder.fromBase64 supports both base64 and base64url formats
-  const mdocBytes = TypedArrayEncoder.fromBase64(base64Url);
-  const issuerSignedDocument = parseIssuerSigned(mdocBytes, mdoc.docType);
-  
-  const issuerAuth = issuerSignedDocument.issuerSigned.issuerAuth;
-  const originalNameSpaces = issuerSignedDocument.issuerSigned.nameSpaces;
-  
-  console.log('Decoded IssuerSigned issuerAuth:', issuerAuth ? 'present' : 'missing');
-  console.log('Available nameSpaces:', Object.keys(originalNameSpaces));
-  
-  // Filter namespaces to only include requested elements
-  // nameSpaces is Record<string, IssuerSignedItem[]>
-  const filteredNameSpaces: Record<string, any[]> = {};
-  
-  for (const [namespaceName, requestedElements] of Object.entries(requestedNamespaces)) {
-    const namespaceItems = originalNameSpaces[namespaceName];
-    if (!namespaceItems || !Array.isArray(namespaceItems)) {
-      console.warn(`Requested namespace ${namespaceName} not found in credential`);
-      continue;
-    }
-    
-    // Filter items in this namespace to only include requested elements
-    // Each item is an IssuerSignedItem
-    const filteredItems = namespaceItems.filter((item) => {
-      try {
-        // IssuerSignedItem has an elementIdentifier property
-        const elementIdentifier = item.elementIdentifier;
-        return requestedElements[elementIdentifier] !== undefined;
-      } catch (e) {
-        console.error('Error processing issuer signed item:', e);
-        return false;
-      }
-    });
-    
-    if (filteredItems.length > 0) {
-      filteredNameSpaces[namespaceName] = filteredItems;
-      console.log(`Namespace ${namespaceName}: filtered ${filteredItems.length}/${namespaceItems.length} items`);
-    }
-  }
-
-  // Build the Document structure following ISO 18013-5 spec
-  const document = {
-    docType: mdoc.docType,
-    issuerSigned: {
-      nameSpaces: filteredNameSpaces,
-      issuerAuth: issuerAuth,
-    },
-    deviceSigned: {
-      nameSpaces: cborEncode({}), // Empty device namespaces (tagged bstr)
-      deviceAuth: {
-        deviceMac: null, // No device authentication for now
-      }
-    },
-    errors: {} // No errors
-  };
-
-  // Build DeviceResponse according to ISO 18013-5:2021
-  // DeviceResponse = {
-  //   "version": tstr,
-  //   "documents": [+Document],
-  //   "status": uint
-  // }
-  const deviceResponse = {
-    version: "1.0",
-    documents: [document],
-    status: 0 // STATUS_OK = 0
-  };
-
-  const encodedResponse = cborEncode(deviceResponse);
-  console.log('Built device response:', encodedResponse.byteLength, 'bytes');
-  
-  // Convert to proper Uint8Array type
-  return new Uint8Array(encodedResponse);
-}
 
 type OpenIDNfcPromptProps = StackScreenProps<RootStackParams, Screens.OpenIDNfcPrompt>
 
@@ -116,6 +18,7 @@ type DeviceRequest = {
   docType: string;
   namespaces: Record<string, Record<string, boolean>>;
   encodedRequest: Uint8Array;
+  sessionTranscript: Uint8Array;
 }
 
 const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) => {
@@ -131,7 +34,7 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
 
   useEffect(() => {
     if (credential) {
-      console.log(`Credential: ${JSON.stringify(Mdoc.fromBase64Url(credential.base64Url), null, 2)}`)
+      console.log(`Credential: ${JSON.stringify(Mdoc.fromBase64Url(credential.firstCredential.base64Url), null, 2)}`)
     }
   }, [credential])
 
@@ -233,6 +136,7 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
           setStatus('Request received');
           setLastRequest(request);
           console.log('Device request received:', request.encodedRequest.byteLength, 'bytes');
+          console.log('Session transcript:', request.sessionTranscript.byteLength, 'bytes');
           
           try {
             // Minimal empty device response (no credential)
@@ -252,19 +156,57 @@ const OpenIDNfcPrompt: React.FC<OpenIDNfcPromptProps> = ({ navigation, route }) 
             if (credential && agent) {
               try {
                 // Get the mdoc instance from the credential record
-                const mdocInstance = Mdoc.fromBase64Url(credential.base64Url);
+                const mdocInstance = Mdoc.fromBase64Url(credential.firstCredential.base64Url);
+
+                console.log('=== DEVICE KEY DEBUGGING ===');
+                console.log('Device key from mdoc instance:', JSON.stringify(mdocInstance.deviceKey, null, 2));
+                console.log('Device keyId from mdoc instance:', JSON.stringify(mdocInstance.deviceKeyId, null, 2));
+                
+                // Check if the private key exists in KMS
+                const deviceKeyId = mdocInstance.deviceKey.keyId;
+                console.log('Checking if private key exists in KMS for keyId:', deviceKeyId);
+                try {
+                  const kms = agent.context.dependencyManager.resolve(Kms.KeyManagementApi);
+                  const publicKeyFromKms = await kms.getPublicKey({ keyId: deviceKeyId });
+                  console.log('✓ Private key found in KMS:', publicKeyFromKms ? 'yes' : 'no');
+                  if (publicKeyFromKms) {
+                    console.log('  Public key from KMS:', JSON.stringify(publicKeyFromKms, null, 2));
+                  }
+                } catch (kmsError: any) {
+                  console.error('✗ Private key NOT found in KMS:', kmsError.message);
+                }
+
                 console.log('Loaded mdoc with docType:', mdocInstance.docType);
                 console.log('Namespaces:', Object.keys(mdocInstance.issuerSignedNamespaces));
                 
-                // Build the device response with requested claims
-                deviceResponse = await buildDeviceResponse(
-                  mdocInstance,
-                  request.namespaces,
-                  request.docType,
-                  credential.base64Url
-                );
+                // Validate that the requested docType matches our credential
+                if (mdocInstance.docType !== request.docType) {
+                  throw new Error(`DocType mismatch: requested ${request.docType}, have ${mdocInstance.docType}`);
+                }
                 
-                console.log('Built device response:', deviceResponse.byteLength, 'bytes');
+                console.log('=== SESSION TRANSCRIPT DEBUGGING ===');
+                console.log('Session transcript hex:', TypedArrayEncoder.toHex(request.sessionTranscript));
+                console.log('Session transcript length:', request.sessionTranscript.byteLength);
+                
+                console.log('=== DOCUMENT REQUEST DEBUGGING ===');
+                console.log('Requested namespaces:', JSON.stringify(request.namespaces, null, 2));
+                
+                // Use credo's MdocDeviceResponse.createDeviceResponse() for ISO 18013-5 proximity flow
+                // This properly handles device authentication, selective disclosure, and CBOR encoding
+                deviceResponse = await MdocDeviceResponse.createDeviceResponse(agent.context, {
+                  mdocs: [mdocInstance],
+                  documentRequests: [{
+                    docType: request.docType,
+                    nameSpaces: request.namespaces,
+                  }],
+                  sessionTranscriptOptions: {
+                    type: 'sesionTranscriptBytes',  // Note: typo in credo API - "sesion" not "session"
+                    sessionTranscriptBytes: request.sessionTranscript,
+                  },
+                });
+                
+                console.log('Built device response using credo:', deviceResponse.byteLength, 'bytes');
+                console.log('Device response hex (first 200 bytes):', TypedArrayEncoder.toHex(deviceResponse.slice(0, 200)));
               } catch (error) {
                 console.error('Error preparing credential for response:', error);
                 Alert.alert('Error', 'Failed to prepare credential response. See console for details.');
